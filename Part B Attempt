@@ -1,0 +1,44 @@
+; need to reset r4
+; reset r3
+			add		r6, r1, #32			; get address of second element
+		
+for2			cmp		r4, #0				; start at 9
+			ble		endFor2
+
+			ldr		r2, [r6, #4]			; value of key
+			sub		r5, r6, #32			; i = j -1
+			ldr		r7, [r5, #4]			; value array[i]
+			
+while		cmp		r5, r1
+			blt		incrj
+			cmp		r7, r2
+			ble		incj
+
+			add 		r8, r5, #32
+			add 		r9, r5, #0
+			bl		swap
+			sub		r5, r5, #32
+			bl 		while
+
+			
+incrj		add 		r8, r5, #32
+			add 		r9, r6, #0
+			bl 		swap
+			add 		r6, r6, #32
+			bl 		for2
+endFor2	
+			
+			
+			add		r6, r6, #32         ; every time you create a new struct, add 32 to
+			;		starting address of last struct to mimic
+			;		non-contiguous memory locations
+			;		I assume address of last struct is in r6
+			;		you DO NOT need to make this assumption
+			
+			;#################################################################################
+			;		Add insert, swap, delete functions
+			;#################################################################################
+
+swap			ldr		r10, [r9, #0]
+			ldr		r11, [r9, #8]
+			ldr		r12, [r11, #0]
