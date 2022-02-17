@@ -1,0 +1,137 @@
+data_to_sort	dcd		34, 23, 22, 8, 50, 74, 2, 1, 17, 40
+list_elements	dcd		10
+			
+main			mov		r0, #-1				; Assigning -1 to r9 because -1 will  be the sentinel value
+			ldr		r3, =data_to_sort   	; Load the starting address of the first
+			;		of element of the array of numbers into r3
+			ldr		r4, =list_elements  	; Address of number of elements in the list
+			ldr		r4, [r4]            	; Number of elements in the list
+			
+			add		r1, r3, #400	 		; Location of first element of linked list - "head pointer"
+			;		(note that I assume it is at a "random" location beyond the end of the array.)
+			
+			mov		r6, r1
+			sub		r5, r6, #32			; r5 points to our previous pointer
+			
+			;#################################################################################
+			;		Include any setup code here prior to loop that loads data elements in array
+			;#################################################################################
+			
+			mov		r10, #0				; Initialize r10 as iterating register for the array
+			;		Initialize first element in the doubly linked list:
+			str		r0, [r6, #0]			;	- First Address stores the previous list address (-1 is our sentinel)
+			;		- Second Address stores the value
+			ldr		r2, [r3, r10]			; 		- Load the first value from the array into r2: 'r2 <- data_to_sort[0]'
+			str		r2, [r6, #4]			; 		- Store r2 into the list element's second address
+			str		r0, [r6, #8]			;	- Store next address in 2nd block of the element
+			sub		r4, r4, #1			;	- Subtract the number of elements by 1
+			
+			;#################################################################################
+			;		Start a loop here to load elements in the array and add them to a linked list
+			;#################################################################################
+			
+loadFor		cmp		r4, #0				; Compare r4 and 0
+			ble		endLoad				; If r4 <= 0, then end the for loop
+			
+			add		r10, r10, #4			; Increment the iterator register by 1 scaled value, r10 <- i + 1
+			ldr		r2, [r3, r10]			; Load the array value into r2, r2 <- data_to_sort[i]
+			add		r6, r6, #32			; Move the current pointer (r6) to the next element in the doubly linked list
+			add		r5, r5, #32			; Move the previous pointer (r5) to the next element in the doubly linked list
+			sub		r4, r4, #1			; Decrement the number of values to load from the array by 1
+			bl		insert				; Branch and link to the insert function
+			b		loadFor				; Branch back to the beginning of the loop unconditionally
+			
+endLoad
+			
+			;		r1 = head pointer; r2 = prev pointer; r3 = curr pointer; r4 = n; r5 = j; r6 = i; r7 = key; r9 = previous item; r10 = previous data; r11 = curr data
+			
+			mov		r2, r1				; r2 gets the head pointer (curr)
+			add		r3, r2, #32			; r3 gets the next pointer
+			
+			;mov		r2, r3
+			;add		r3, r3, #32
+			;mov		r8, r3
+			;bl		swap
+			;end
+			
+			ldr		r4, =list_elements  	; Address of number of elements in the list
+			ldr		r4, [r4]            	; Number of elements in the list
+			
+sortFor		cmp		r4, #1				; compare j with n
+			ble		endSort				; if j >= n end the loop
+			
+while		ldr		r5, [r2, #4]			; value @ curr pointer
+			ldr		r6, [r3, #4]			; value @ next pointer
+			
+			cmp		r5, r6
+			ble		sortIncr
+			
+			mov		r8, r3
+			bl		swap
+			
+whileIncr		ldr		r7, [r3, #0]
+			cmp		r7, r0
+			beq		sortIncr
+			
+			ldr		r2, [r3, #0]
+			bl		while
+			
+sortIncr		sub		r4, r4, #1
+			cmp		r4, #1
+			ble		endSort
+			
+			add		r3, r3, #32			; incr j
+			ldr		r2, [r3, #0]
+			bl		sortFor
+			
+endSort		; mov 		r12, #0x420
+			end
+			
+			mov		r8, r3
+			bl		swap
+			
+			end
+			;#################################################################################
+			;		Add insert, swap, delete functions
+			;#################################################################################
+			
+insert									; Insert takes 3 arguments: r2 = value to be inserted, r5 = prev addr, r6 = curr addr
+			str		r6, [r5, #8]			; Store curr address as the next address of the previous element, overwriting the sentinel character
+			str		r5, [r6]				; Store previous addr into current addr value
+			str		r2, [r6, #4]			; Store value in curr addr offset by 4
+			str		r0, [r6, #8]			; Store sentinel
+			mov		r15, r14				; Reset the PC
+			
+swap			ldr		r9,  [r8, #0]			; Load address of where current element's previous pointer is pointing to
+			ldr		r10, [r8, #8]			; Load address of where current element's next pointer is pointing to
+			ldr		r12, [r9, #0]			; Load address of previous element's previous pointer is pointing to
+			ldr		r7,  [r9, #8]			; address of previous element's next pointer is pointing to
+			
+			cmp		r10, r0
+			beq		prevStore
+			ldr		r11, [r10, #0]			; Load addres of where next element's previous pointer is pointing to
+			str		r9,  [r10, #0]
+			
+			
+prevStore		cmp		r12, r0
+			beq		store
+			str		r8, 	[r12, #8]
+			
+store		str		r12, [r8, #0]			; Store
+			str		r9,  [r8, #8]
+			str		r10, [r9, #8]
+			
+			str		r7, [r9, #0]
+			
+			mov		r15, r14
+			
+delete									; Delete takes 2 arguments: r5 = prev addr, r6 = curr addr
+			ldr		r9, [r6, #8]			; Load the current pointer's 'next' address into the temp reg r9
+			str		r9, [r5, #8]			; Store r9 into the previous pointer's 'next' address
+			str		r5, [r6, #32]			; Store the previous pointer's address into the next pointer's 'previous' address
+			mov		r15, r14				; Reset PC
+			
+			
+			
+			end
+			
