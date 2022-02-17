@@ -1,0 +1,25 @@
+swap			ldr		r9,  [r8, #0]			; Load address of where current element's previous pointer is pointing to
+			ldr		r10, [r8, #8]			; Load address of where current element's next pointer is pointing to
+			ldr		r12, [r9, #0]			; Load address of previous element's previous pointer is pointing to
+			ldr		r7,  [r9, #8]			; address of previous element's next pointer is pointing to
+			
+			cmp		r10, r0
+			beq		prevStore
+			ldr		r11, [r9, #0]			; Load addres of where next element's previous pointer is pointing to
+			str		r9,  [r10, #0]
+			str		r10, [r9, #8]
+			cmp		r11, r0
+			beq		prevStore
+			str		r11, [r9, #0]
+			
+prevStore		cmp		r12, r0
+			beq		store
+			ldr		r6, 	[r12, #0]
+			cmp		r6, 	r0
+			beq		store
+			str		r8,	[r6, #0]
+			
+store		str		r12, [r8, #0]			; Store
+			str		r9,  [r8, #8]
+			
+			mov		r15, r14
